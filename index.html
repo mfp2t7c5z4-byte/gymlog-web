@@ -67,17 +67,19 @@
 
         .tab-button {
             flex: 1;
-            padding: 12px 8px;
+            padding: 16px 8px;
             border: none;
             background: none;
             color: var(--muted);
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            min-height: 70px;
+            justify-content: center;
         }
 
         .tab-button.active {
@@ -406,6 +408,64 @@
             color: var(--foreground);
             margin-bottom: 4px;
         }
+
+        .exercise-dropdown {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .exercise-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--surface);
+            color: var(--foreground);
+            font-size: 16px;
+        }
+
+        .exercise-list {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            z-index: 100;
+        }
+
+        .exercise-list.active {
+            display: block;
+        }
+
+        .exercise-option {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--foreground);
+        }
+
+        .exercise-option:last-child {
+            border-bottom: none;
+        }
+
+        .exercise-option:active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .exercise-option-category {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -448,6 +508,22 @@
             <!-- Templates Screen -->
             <div id="templates-screen" class="screen">
                 <div id="templates-list"></div>
+            </div>
+        </div>
+
+        <!-- Exercise Selector Modal -->
+        <div id="exercise-modal" class="rest-timer-modal">
+            <div class="rest-timer-content" style="max-width: 350px; text-align: left;">
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Add Exercise</div>
+                <div class="exercise-dropdown">
+                    <input type="text" id="exercise-input" class="exercise-input" placeholder="Search or type exercise...">
+                    <div id="exercise-list" class="exercise-list"></div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="exercise-category" class="input-field" placeholder="Category" style="flex: 1; margin: 0;">
+                    <button class="button small-button" onclick="addExerciseFromModal()" style="width: auto; padding: 10px 16px; margin: 0;">Add</button>
+                </div>
+                <button class="button button-secondary" onclick="closeExerciseModal()" style="margin-top: 12px;">Cancel</button>
             </div>
         </div>
 
@@ -497,6 +573,7 @@
 
         let workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
         let templates = JSON.parse(localStorage.getItem('templates') || '[]');
+        let pastExercises = JSON.parse(localStorage.getItem('pastExercises') || '[]');
         let activeWorkout = null;
         let timerInterval = null;
         let restTimerInterval = null;
@@ -506,6 +583,16 @@
         function saveData() {
             localStorage.setItem('workouts', JSON.stringify(workouts));
             localStorage.setItem('templates', JSON.stringify(templates));
+            localStorage.setItem('pastExercises', JSON.stringify(pastExercises));
+        }
+
+        function getPastExercises() {
+            const seen = new Set();
+            return pastExercises.filter(ex => {
+                if (seen.has(ex.name)) return false;
+                seen.add(ex.name);
+                return true;
+            });
         }
 
         function switchTab(tab) {
@@ -564,11 +651,34 @@
             }, 1000);
         }
 
+        function getLastSetForExercise(exerciseName) {
+            // Find the most recent workout with this exercise
+            for (let i = workouts.length - 1; i >= 0; i--) {
+                const w = workouts[i];
+                const exercise = w.exercises.find(e => e.name === exerciseName);
+                if (exercise && exercise.sets.length > 0) {
+                    const lastSet = exercise.sets[exercise.sets.length - 1];
+                    return lastSet;
+                }
+            }
+            return null;
+        }
+
         function renderWorkout() {
-            const html = activeWorkout.exercises.map((ex, i) => `
+            const html = activeWorkout.exercises.map((ex, i) => {
+                const lastSet = getLastSetForExercise(ex.name);
+                return `
                 <div class="exercise-card">
-                    <div class="exercise-name">${ex.name}</div>
-                    <div class="exercise-category">${ex.cat}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <div class="exercise-name">${ex.name}</div>
+                            <div class="exercise-category">${ex.cat}</div>
+                        </div>
+                        ${lastSet ? `<div style="font-size: 12px; color: var(--muted); text-align: right;">
+                            <div style="font-weight: 600; color: var(--foreground);">Last: ${lastSet.weight}kg × ${lastSet.reps}</div>
+                            <div>Previous set</div>
+                        </div>` : ''}
+                    </div>
                     ${ex.sets.map((set, j) => `
                         <div class="set-row">
                             <span>${j + 1}</span>
@@ -581,16 +691,75 @@
                     <button class="button button-secondary small-button" onclick="addSet(${i})">+ Set</button>
                     <button class="button button-danger small-button" onclick="removeExercise(${i})">Remove</button>
                 </div>
-            `).join('');
+                    `;
+            }).join('');
             document.getElementById('exercises-list').innerHTML = html;
         }
 
-        function addExercise() {
-            const name = prompt('Exercise name:');
-            if (!name) return;
-            const cat = prompt('Category (Chest, Back, Legs, Arms, Shoulders, Core, Cardio, Full Body):') || 'Full Body';
+        function openExerciseModal() {
+            document.getElementById('exercise-modal').classList.add('active');
+            document.getElementById('exercise-input').value = '';
+            document.getElementById('exercise-category').value = '';
+            renderExerciseList();
+        }
+
+        function closeExerciseModal() {
+            document.getElementById('exercise-modal').classList.remove('active');
+        }
+
+        function renderExerciseList() {
+            const input = document.getElementById('exercise-input').value.toLowerCase();
+            const past = getPastExercises();
+            
+            let options = [];
+            
+            // Show past exercises first
+            if (input === '') {
+                options = past.map(ex => `
+                    <div class="exercise-option" onclick="selectExercise('${ex.name}', '${ex.cat}')">
+                        ${ex.name}
+                        <div class="exercise-option-category">${ex.cat}</div>
+                    </div>
+                `);
+            } else {
+                // Filter past exercises
+                const filtered = past.filter(ex => ex.name.toLowerCase().includes(input) || ex.cat.toLowerCase().includes(input));
+                options = filtered.map(ex => `
+                    <div class="exercise-option" onclick="selectExercise('${ex.name}', '${ex.cat}')">
+                        ${ex.name}
+                        <div class="exercise-option-category">${ex.cat}</div>
+                    </div>
+                `);
+            }
+            
+            const list = document.getElementById('exercise-list');
+            list.innerHTML = options.join('');
+            list.classList.toggle('active', options.length > 0);
+        }
+
+        function selectExercise(name, cat) {
+            document.getElementById('exercise-input').value = name;
+            document.getElementById('exercise-category').value = cat;
+            document.getElementById('exercise-list').classList.remove('active');
+        }
+
+        function addExerciseFromModal() {
+            const name = document.getElementById('exercise-input').value.trim();
+            const cat = document.getElementById('exercise-category').value.trim() || 'Full Body';
+            
+            if (!name) {
+                alert('Enter exercise name');
+                return;
+            }
+            
             activeWorkout.exercises.push({ name, cat, sets: [{ weight: 0, reps: 0, done: false }] });
+            
+            // Save to past exercises
+            pastExercises.push({ name, cat, date: new Date().toISOString() });
+            saveData();
+            
             renderWorkout();
+            closeExerciseModal();
         }
 
         function removeExercise(i) {
@@ -793,13 +962,14 @@
 
         // Event listeners
         document.getElementById('start-btn').addEventListener('click', startWorkout);
-        document.getElementById('add-exercise-btn').addEventListener('click', addExercise);
+        document.getElementById('add-exercise-btn').addEventListener('click', openExerciseModal);
         document.getElementById('finish-btn').addEventListener('click', finishWorkout);
         document.getElementById('discard-btn').addEventListener('click', discardWorkout);
         document.getElementById('tab-home').addEventListener('click', () => switchTab('home'));
         document.getElementById('tab-history').addEventListener('click', () => switchTab('history'));
         document.getElementById('tab-progress').addEventListener('click', () => switchTab('progress'));
         document.getElementById('tab-templates').addEventListener('click', () => switchTab('templates'));
+        document.getElementById('exercise-input').addEventListener('input', renderExerciseList);
 
         // Init
         renderHome();
