@@ -62,28 +62,36 @@
             gap: 0;
             border-top: 1px solid var(--border);
             background-color: var(--background);
-            padding-bottom: max(0, env(safe-area-inset-bottom));
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            padding-top: 8px;
         }
 
         .tab-button {
             flex: 1;
-            padding: 16px 8px;
+            padding: 0;
             border: none;
             background: none;
             color: var(--muted);
-            font-size: 13px;
+            font-size: 40px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            min-height: 70px;
+            gap: 0;
+            min-height: 60px;
             justify-content: center;
+            opacity: 0.6;
+            transition: opacity 0.2s;
         }
 
         .tab-button.active {
             color: var(--primary);
+            opacity: 1;
+        }
+
+        .tab-button:active {
+            opacity: 0.8;
         }
 
         .screen {
@@ -111,6 +119,22 @@
             opacity: 0.8;
         }
 
+        .button-secondary {
+            background-color: var(--surface);
+            color: var(--foreground);
+            border: 1px solid var(--border);
+        }
+
+        .button-danger {
+            background-color: #EF4444;
+            color: white;
+        }
+
+        .button-success {
+            background-color: #22C55E;
+            color: white;
+        }
+
         .stat-card {
             background-color: var(--surface);
             border: 1px solid var(--border);
@@ -128,6 +152,33 @@
 
         .stat-label {
             font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .stat-row-item {
+            flex: 1;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-row-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-row-label {
+            font-size: 11px;
             color: var(--muted);
             margin-top: 4px;
         }
@@ -233,22 +284,6 @@
             font-size: 13px;
             color: var(--muted);
             margin-top: 8px;
-        }
-
-        .button-secondary {
-            background-color: var(--surface);
-            color: var(--foreground);
-            border: 1px solid var(--border);
-        }
-
-        .button-danger {
-            background-color: #EF4444;
-            color: white;
-        }
-
-        .button-success {
-            background-color: #22C55E;
-            color: white;
         }
 
         .small-button {
@@ -466,6 +501,42 @@
             color: var(--muted);
             margin-top: 2px;
         }
+
+        .quote {
+            background-color: var(--surface);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-style: italic;
+            color: var(--muted);
+        }
+
+        .template-quick-btn {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--foreground);
+        }
+
+        .template-quick-btn:active {
+            opacity: 0.7;
+        }
+
+        .pr-badge {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 4px;
+        }
     </style>
 </head>
 <body>
@@ -477,11 +548,51 @@
         <div class="content" id="content">
             <!-- Home Screen -->
             <div id="home-screen" class="screen active">
-                <div class="stat-card">
-                    <div class="stat-value" id="workouts-count">0</div>
-                    <div class="stat-label">Workouts</div>
+                <button class="button" id="start-btn" style="background-color: #22C55E; margin-bottom: 12px;">💪 Start Workout</button>
+                
+                <div class="stat-row">
+                    <div class="stat-row-item">
+                        <div class="stat-row-value" id="streak-value">0</div>
+                        <div class="stat-row-label">🔥 Streak</div>
+                    </div>
+                    <div class="stat-row-item">
+                        <div class="stat-row-value" id="workouts-count">0</div>
+                        <div class="stat-row-label">Total</div>
+                    </div>
                 </div>
-                <button class="button" id="start-btn">+ Start Workout</button>
+
+                <div id="this-week-stats" class="stat-card" style="display: none;">
+                    <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">This Week</div>
+                    <div id="week-stats-text" style="font-size: 14px; color: var(--foreground);"></div>
+                </div>
+
+                <div id="last-workout" class="stat-card" style="display: none;">
+                    <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Last Workout</div>
+                    <div id="last-workout-text" style="font-size: 14px; color: var(--foreground); font-weight: 600;"></div>
+                </div>
+
+                <div id="weekly-volume" class="chart-container" style="display: none;">
+                    <div class="chart-title">Weekly Volume</div>
+                    <div id="volume-chart" class="chart"></div>
+                </div>
+
+                <div id="top-prs" style="display: none;">
+                    <div style="font-size: 13px; font-weight: 700; color: var(--foreground); margin-bottom: 8px;">🏆 Top Lifts</div>
+                    <div id="top-prs-list"></div>
+                </div>
+
+                <div id="body-parts" class="stat-card" style="display: none;">
+                    <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Body Parts This Week</div>
+                    <div id="body-parts-text" style="font-size: 13px; color: var(--foreground);"></div>
+                </div>
+
+                <div id="daily-frequency" class="chart-container" style="display: none;">
+                    <div class="chart-title">Workouts This Week</div>
+                    <div id="frequency-chart" class="chart"></div>
+                </div>
+
+                <div id="motivation-quote" class="quote" style="display: none;"></div>
+
                 <div id="recent-workouts"></div>
             </div>
 
@@ -507,6 +618,7 @@
 
             <!-- Templates Screen -->
             <div id="templates-screen" class="screen">
+                <button class="button" id="create-template-btn">+ Create Template</button>
                 <div id="templates-list"></div>
             </div>
         </div>
@@ -546,12 +658,23 @@
             </div>
         </div>
 
+        <!-- Create Template Modal -->
+        <div id="create-template-modal" class="rest-timer-modal">
+            <div class="rest-timer-content" style="max-width: 350px; text-align: left;">
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Create Template</div>
+                <input type="text" id="template-name-input" class="input-field" placeholder="Template name (e.g., Push Day)">
+                <div id="template-exercises-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 12px;"></div>
+                <button class="button" onclick="saveNewTemplate()">Save Template</button>
+                <button class="button button-secondary" onclick="closeCreateTemplateModal()">Cancel</button>
+            </div>
+        </div>
+
         <!-- Tab Bar -->
         <div class="tabs">
-            <button class="tab-button active" id="tab-home">🏠 Home</button>
-            <button class="tab-button" id="tab-history">⏱️ History</button>
-            <button class="tab-button" id="tab-progress">📈 Progress</button>
-            <button class="tab-button" id="tab-templates">📋 Templates</button>
+            <button class="tab-button active" id="tab-home" title="Home">🏠</button>
+            <button class="tab-button" id="tab-history" title="History">⏱️</button>
+            <button class="tab-button" id="tab-progress" title="Progress">📈</button>
+            <button class="tab-button" id="tab-templates" title="Templates">📋</button>
         </div>
     </div>
 
@@ -569,6 +692,17 @@
             { id: 'legpress', name: 'Leg Press', cat: 'Legs' },
             { id: 'pushup', name: 'Push-up', cat: 'Chest' },
             { id: 'plank', name: 'Plank', cat: 'Core' },
+        ];
+
+        const QUOTES = [
+            "The iron never lies.",
+            "Discipline is choosing between what you want now and what you want most.",
+            "Your body can stand almost anything. It's your mind that you need to convince.",
+            "Success is the sum of small efforts repeated day in and day out.",
+            "The only bad workout is the one that didn't happen.",
+            "Pain is temporary, pride is forever.",
+            "Lift heavy, feel alive.",
+            "Train insane or remain the same.",
         ];
 
         let workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
@@ -607,10 +741,121 @@
             if (tab === 'history') renderHistory();
             if (tab === 'progress') renderProgress();
             if (tab === 'templates') renderTemplates();
+            if (tab === 'home') renderHome();
+        }
+
+        function getWeeklyStats() {
+            const now = new Date();
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const thisWeek = workouts.filter(w => new Date(w.date) > weekAgo);
+            
+            let totalVolume = 0;
+            let bodyParts = new Set();
+            
+            thisWeek.forEach(w => {
+                w.exercises.forEach(e => {
+                    bodyParts.add(e.cat);
+                    totalVolume += e.sets.reduce((a, s) => a + (s.weight * s.reps), 0);
+                });
+            });
+            
+            return { count: thisWeek.length, volume: totalVolume, bodyParts: Array.from(bodyParts) };
+        }
+
+        function getTopPRs() {
+            const stats = {};
+            workouts.forEach(w => {
+                w.exercises.forEach(e => {
+                    if (!stats[e.name]) stats[e.name] = { cat: e.cat, max: 0 };
+                    const max = Math.max(...e.sets.map(s => s.weight));
+                    stats[e.name].max = Math.max(stats[e.name].max, max);
+                });
+            });
+            
+            return Object.entries(stats)
+                .filter(([_, s]) => s.max > 0)
+                .sort((a, b) => b[1].max - a[1].max)
+                .slice(0, 3);
         }
 
         function renderHome() {
             document.getElementById('workouts-count').textContent = workouts.length;
+            
+            // Streak
+            let streak = 0;
+            const today = new Date();
+            for (let i = 0; i < 365; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toDateString();
+                if (workouts.some(w => new Date(w.date).toDateString() === dateStr)) {
+                    streak++;
+                } else if (i > 0) {
+                    break;
+                }
+            }
+            document.getElementById('streak-value').textContent = streak;
+            
+            // Weekly stats
+            const weekStats = getWeeklyStats();
+            const weekEl = document.getElementById('this-week-stats');
+            if (weekStats.count > 0) {
+                weekEl.style.display = 'block';
+                document.getElementById('week-stats-text').textContent = `${weekStats.count} workouts • ${Math.round(weekStats.volume / 1000)}k kg`;
+            }
+            
+            // Last workout
+            if (workouts.length > 0) {
+                const last = workouts[workouts.length - 1];
+                document.getElementById('last-workout').style.display = 'block';
+                const date = new Date(last.date).toLocaleDateString();
+                document.getElementById('last-workout-text').textContent = `${last.name} • ${date}`;
+            }
+            
+            // Top PRs
+            const topPRs = getTopPRs();
+            if (topPRs.length > 0) {
+                document.getElementById('top-prs').style.display = 'block';
+                document.getElementById('top-prs-list').innerHTML = topPRs.map(([name, s]) => `
+                    <div class="exercise-card">
+                        <div class="exercise-name">${name} <span class="pr-badge">${s.max}kg</span></div>
+                    </div>
+                `).join('');
+            }
+            
+            // Body parts
+            if (weekStats.bodyParts.length > 0) {
+                document.getElementById('body-parts').style.display = 'block';
+                document.getElementById('body-parts-text').textContent = weekStats.bodyParts.join(', ');
+            }
+            
+            // Weekly frequency chart
+            if (workouts.length > 0) {
+                const now = new Date();
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const days = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date(now);
+                    d.setDate(d.getDate() - i);
+                    const count = workouts.filter(w => new Date(w.date).toDateString() === d.toDateString()).length;
+                    days.push({ date: d.toLocaleDateString('en-US', { weekday: 'short' }), count });
+                }
+                
+                const maxCount = Math.max(...days.map(d => d.count), 1);
+                document.getElementById('daily-frequency').style.display = 'block';
+                document.getElementById('frequency-chart').innerHTML = days.map(d => `
+                    <div class="chart-bar" style="height: ${(d.count / maxCount) * 100}%;">
+                        <div class="chart-bar-label">${d.date}</div>
+                    </div>
+                `).join('');
+            }
+            
+            // Motivation quote
+            const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+            document.getElementById('motivation-quote').style.display = 'block';
+            document.getElementById('motivation-quote').textContent = `"${quote}"`;
+            
+            // Recent workouts
             const recent = workouts.slice(-5).reverse().map(w => `
                 <div class="workout-item" onclick="viewWorkout('${w.id}')">
                     <div class="workout-item-title">${w.name}</div>
@@ -652,7 +897,6 @@
         }
 
         function getLastSetForExercise(exerciseName) {
-            // Find the most recent workout with this exercise
             for (let i = workouts.length - 1; i >= 0; i--) {
                 const w = workouts[i];
                 const exercise = w.exercises.find(e => e.name === exerciseName);
@@ -713,7 +957,6 @@
             
             let options = [];
             
-            // Show past exercises first
             if (input === '') {
                 options = past.map(ex => `
                     <div class="exercise-option" onclick="selectExercise('${ex.name}', '${ex.cat}')">
@@ -722,7 +965,6 @@
                     </div>
                 `);
             } else {
-                // Filter past exercises
                 const filtered = past.filter(ex => ex.name.toLowerCase().includes(input) || ex.cat.toLowerCase().includes(input));
                 options = filtered.map(ex => `
                     <div class="exercise-option" onclick="selectExercise('${ex.name}', '${ex.cat}')">
@@ -753,8 +995,6 @@
             }
             
             activeWorkout.exercises.push({ name, cat, sets: [{ weight: 0, reps: 0, done: false }] });
-            
-            // Save to past exercises
             pastExercises.push({ name, cat, date: new Date().toISOString() });
             saveData();
             
@@ -828,14 +1068,24 @@
             restTimerInterval = setInterval(update, 1000);
         }
 
-        // Update greeting on page load
-        function initGreeting() {
-            const hour = new Date().getHours();
-            let greeting = 'Good morning, Sam';
-            if (hour >= 12 && hour < 18) greeting = 'Good afternoon, Sam';
-            if (hour >= 18) greeting = 'Good evening, Sam';
-            const greetingEl = document.querySelector('.header p') || document.querySelector('[id*="greeting"]');
-            if (greetingEl) greetingEl.textContent = greeting;
+        function playTimerSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {}
         }
 
         function finishWorkout() {
@@ -971,51 +1221,70 @@
             }
         }
 
+        function openCreateTemplateModal() {
+            document.getElementById('create-template-modal').classList.add('active');
+            document.getElementById('template-name-input').value = '';
+            
+            const past = getPastExercises();
+            const html = past.map(ex => `
+                <label style="display: flex; align-items: center; padding: 8px; border-bottom: 1px solid var(--border); cursor: pointer;">
+                    <input type="checkbox" class="template-exercise-checkbox" value="${ex.name}" data-cat="${ex.cat}" style="margin-right: 8px;">
+                    <div>
+                        <div style="font-size: 13px; color: var(--foreground);">${ex.name}</div>
+                        <div style="font-size: 11px; color: var(--muted);">${ex.cat}</div>
+                    </div>
+                </label>
+            `).join('');
+            document.getElementById('template-exercises-list').innerHTML = html;
+        }
+
+        function closeCreateTemplateModal() {
+            document.getElementById('create-template-modal').classList.remove('active');
+        }
+
+        function saveNewTemplate() {
+            const name = document.getElementById('template-name-input').value.trim();
+            if (!name) {
+                alert('Enter template name');
+                return;
+            }
+            
+            const selected = Array.from(document.querySelectorAll('.template-exercise-checkbox:checked')).map(cb => ({
+                name: cb.value,
+                cat: cb.dataset.cat,
+                sets: [{ weight: 0, reps: 0, done: false }]
+            }));
+            
+            if (selected.length === 0) {
+                alert('Select at least one exercise');
+                return;
+            }
+            
+            templates.push({
+                id: Date.now().toString(),
+                name,
+                exercises: selected
+            });
+            
+            saveData();
+            closeCreateTemplateModal();
+            renderTemplates();
+            alert('Template saved!');
+        }
+
         // Event listeners
         document.getElementById('start-btn').addEventListener('click', startWorkout);
         document.getElementById('add-exercise-btn').addEventListener('click', openExerciseModal);
         document.getElementById('finish-btn').addEventListener('click', finishWorkout);
         document.getElementById('discard-btn').addEventListener('click', discardWorkout);
+        document.getElementById('create-template-btn').addEventListener('click', openCreateTemplateModal);
         document.getElementById('tab-home').addEventListener('click', () => switchTab('home'));
         document.getElementById('tab-history').addEventListener('click', () => switchTab('history'));
         document.getElementById('tab-progress').addEventListener('click', () => switchTab('progress'));
         document.getElementById('tab-templates').addEventListener('click', () => switchTab('templates'));
         document.getElementById('exercise-input').addEventListener('input', renderExerciseList);
 
-        // Add greeting with name
-        function updateGreeting() {
-            const hour = new Date().getHours();
-            let greeting = 'Good morning';
-            if (hour >= 12 && hour < 18) greeting = 'Good afternoon';
-            if (hour >= 18) greeting = 'Good evening';
-            // This would be set by the header, but we'll update it if it exists
-        }
-
-        // Play sound for rest timer
-        function playTimerSound() {
-            // Create a simple beep sound using Web Audio API
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 800; // Hz
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
-        }
-
-        // Init
-        renderHome();
-        initGreeting();
-        
-        // Add greeting to header if it doesn't exist
+        // Add greeting to header
         const headerEl = document.querySelector('.header');
         if (headerEl && !headerEl.querySelector('p')) {
             const p = document.createElement('p');
@@ -1029,6 +1298,9 @@
             p.textContent = greeting;
             headerEl.appendChild(p);
         }
+
+        // Init
+        renderHome();
     </script>
 </body>
 </html>
