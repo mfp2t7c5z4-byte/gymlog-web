@@ -17,11 +17,11 @@
 
         :root {
             --primary: #EF4444;
-            --background: #FFFFFF;
-            --surface: #F5F5F5;
-            --foreground: #111111;
-            --muted: #6B7280;
-            --border: #E5E7EB;
+            --background: #0F172A;
+            --surface: #1E293B;
+            --foreground: #F1F5F9;
+            --muted: #94A3B8;
+            --border: #334155;
         }
 
         body {
@@ -257,6 +257,155 @@
             display: inline-block;
             width: auto;
         }
+
+        .rest-timer-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rest-timer-modal.active {
+            display: flex;
+        }
+
+        .rest-timer-content {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            max-width: 300px;
+        }
+
+        .rest-timer-time {
+            font-size: 64px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 16px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .rest-timer-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .rest-timer-controls input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--background);
+            color: var(--foreground);
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .rest-timer-presets {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .preset-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--background);
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .preset-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .chart-container {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 12px;
+        }
+
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 200px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .chart-bar {
+            flex: 1;
+            min-width: 40px;
+            background-color: var(--primary);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .chart-bar-value {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--foreground);
+            white-space: nowrap;
+        }
+
+        .chart-bar-label {
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .chart-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 32px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .chart-stat {
+            text-align: center;
+        }
+
+        .chart-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 4px;
+        }
     </style>
 </head>
 <body>
@@ -302,6 +451,25 @@
             </div>
         </div>
 
+        <!-- Rest Timer Modal -->
+        <div id="rest-timer-modal" class="rest-timer-modal">
+            <div class="rest-timer-content">
+                <div class="rest-timer-time" id="rest-time">1:30</div>
+                <div class="rest-timer-controls">
+                    <input type="number" id="rest-input" min="10" max="600" value="90" placeholder="seconds">
+                    <button class="button small-button" onclick="startRestTimer()" style="width: auto; padding: 10px 16px; margin: 0;">Start</button>
+                </div>
+                <div class="rest-timer-presets">
+                    <button class="preset-btn" onclick="setRestDuration(30)">30s</button>
+                    <button class="preset-btn" onclick="setRestDuration(60)">1m</button>
+                    <button class="preset-btn active" onclick="setRestDuration(90)">1:30</button>
+                    <button class="preset-btn" onclick="setRestDuration(120)">2m</button>
+                    <button class="preset-btn" onclick="setRestDuration(180)">3m</button>
+                </div>
+                <button class="button button-secondary" onclick="closeRestTimer()">Close</button>
+            </div>
+        </div>
+
         <!-- Tab Bar -->
         <div class="tabs">
             <button class="tab-button active" id="tab-home">🏠 Home</button>
@@ -331,6 +499,8 @@
         let templates = JSON.parse(localStorage.getItem('templates') || '[]');
         let activeWorkout = null;
         let timerInterval = null;
+        let restTimerInterval = null;
+        let restDuration = 90;
         let currentTab = 'home';
 
         function saveData() {
@@ -405,7 +575,7 @@
                             <input type="number" class="set-input" placeholder="kg" value="${set.weight}" onchange="updateSet(${i}, ${j}, 'weight', this.value)">
                             <span>×</span>
                             <input type="number" class="set-input" placeholder="reps" value="${set.reps}" onchange="updateSet(${i}, ${j}, 'reps', this.value)">
-                            <input type="checkbox" ${set.done ? 'checked' : ''} onchange="updateSet(${i}, ${j}, 'done', this.checked)">
+                            <input type="checkbox" ${set.done ? 'checked' : ''} onchange="toggleSet(${i}, ${j}, this.checked)">
                         </div>
                     `).join('')}
                     <button class="button button-secondary small-button" onclick="addSet(${i})">+ Set</button>
@@ -442,6 +612,52 @@
             }
         }
 
+        function toggleSet(i, j, done) {
+            activeWorkout.exercises[i].sets[j].done = done;
+            if (done) openRestTimer();
+        }
+
+        function openRestTimer() {
+            document.getElementById('rest-timer-modal').classList.add('active');
+            document.getElementById('rest-input').value = restDuration;
+        }
+
+        function closeRestTimer() {
+            document.getElementById('rest-timer-modal').classList.remove('active');
+            if (restTimerInterval) clearInterval(restTimerInterval);
+        }
+
+        function setRestDuration(seconds) {
+            restDuration = seconds;
+            document.getElementById('rest-input').value = seconds;
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function startRestTimer() {
+            const seconds = parseInt(document.getElementById('rest-input').value) || 90;
+            restDuration = seconds;
+            let remaining = seconds;
+            
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            
+            const update = () => {
+                const m = Math.floor(remaining / 60);
+                const s = remaining % 60;
+                document.getElementById('rest-time').textContent = `${m}:${String(s).padStart(2, '0')}`;
+                
+                if (remaining <= 0) {
+                    clearInterval(restTimerInterval);
+                    if ('vibrate' in navigator) navigator.vibrate(200);
+                    return;
+                }
+                remaining--;
+            };
+            
+            update();
+            restTimerInterval = setInterval(update, 1000);
+        }
+
         function finishWorkout() {
             if (activeWorkout.exercises.length === 0) {
                 alert('Add at least one exercise');
@@ -453,6 +669,7 @@
             saveData();
             activeWorkout = null;
             clearInterval(timerInterval);
+            if (restTimerInterval) clearInterval(restTimerInterval);
             document.getElementById('home-screen').style.display = 'block';
             document.getElementById('workout-screen').style.display = 'none';
             renderHome();
@@ -462,6 +679,7 @@
             if (confirm('Discard workout?')) {
                 activeWorkout = null;
                 clearInterval(timerInterval);
+                if (restTimerInterval) clearInterval(restTimerInterval);
                 document.getElementById('home-screen').style.display = 'block';
                 document.getElementById('workout-screen').style.display = 'none';
             }
@@ -491,20 +709,47 @@
             const stats = {};
             workouts.forEach(w => {
                 w.exercises.forEach(e => {
-                    if (!stats[e.name]) stats[e.name] = { cat: e.cat, max: 0, count: 0 };
-                    const max = Math.max(...e.sets.map(s => s.weight));
-                    stats[e.name].max = Math.max(stats[e.name].max, max);
-                    stats[e.name].count++;
+                    if (!stats[e.name]) stats[e.name] = { cat: e.cat, sessions: [], maxWeight: 0 };
+                    const maxWeight = Math.max(...e.sets.map(s => s.weight));
+                    stats[e.name].sessions.push({ date: new Date(w.date).toLocaleDateString(), weight: maxWeight });
+                    stats[e.name].maxWeight = Math.max(stats[e.name].maxWeight, maxWeight);
                 });
             });
-            const html = Object.entries(stats).length ? Object.entries(stats).map(([name, s]) => `
-                <div class="exercise-card">
-                    <div class="exercise-name">${name}</div>
-                    <div class="exercise-category">${s.cat}</div>
-                    <div class="stat-value" style="margin-top: 8px; font-size: 24px;">${s.max}kg</div>
-                    <div style="font-size: 12px; color: var(--muted); margin-top: 8px;">${s.count} sessions</div>
-                </div>
-            `).join('') : '<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">No data</div></div>';
+
+            const html = Object.entries(stats).length ? Object.entries(stats).map(([name, s]) => {
+                const maxVal = Math.max(...s.sessions.map(x => x.weight));
+                const minVal = Math.min(...s.sessions.map(x => x.weight));
+                const improvement = maxVal - minVal;
+                
+                return `
+                    <div class="chart-container">
+                        <div class="chart-title">${name}</div>
+                        <div class="chart">
+                            ${s.sessions.map(session => `
+                                <div class="chart-bar" style="height: ${(session.weight / maxVal) * 100}%;">
+                                    <div class="chart-bar-value">${session.weight}kg</div>
+                                    <div class="chart-bar-label">${session.date}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="chart-stats">
+                            <div class="chart-stat">
+                                <div class="chart-stat-value">${maxVal}kg</div>
+                                <div>Max</div>
+                            </div>
+                            <div class="chart-stat">
+                                <div class="chart-stat-value">${minVal}kg</div>
+                                <div>Min</div>
+                            </div>
+                            <div class="chart-stat">
+                                <div class="chart-stat-value">+${improvement}kg</div>
+                                <div>Gain</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">No data</div></div>';
+            
             document.getElementById('progress-list').innerHTML = html;
         }
 
