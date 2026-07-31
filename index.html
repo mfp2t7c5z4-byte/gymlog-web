@@ -791,23 +791,24 @@
                     });
                 }
             });
-            document.getElementById('weekly-kg-value').textContent = Math.round(weeklyKg / 1000) + 'k';
+            document.getElementById('weekly-kg-value').textContent = Math.round(weeklyKg);
             
             // This week workouts count
             const weekStats = getWeeklyStats();
             const weekEl = document.getElementById('this-week-stats');
-            if (weekStats.count > 0) {
-                weekEl.style.display = 'block';
-                document.getElementById('week-stats-text').textContent = `${weekStats.count} workouts`;
-            }
+            weekEl.style.display = 'block';
+            document.getElementById('week-stats-text').textContent = `${weekStats.count} workouts`;
             
             // Last workout - show body parts and date
+            const lastWorkoutEl = document.getElementById('last-workout');
             if (workouts.length > 0) {
                 const last = workouts[workouts.length - 1];
-                document.getElementById('last-workout').style.display = 'block';
+                lastWorkoutEl.style.display = 'block';
                 const date = new Date(last.date).toLocaleDateString();
                 const bodyParts = last.exercises.map(e => e.cat).filter((v, i, a) => a.indexOf(v) === i).join(', ');
                 document.getElementById('last-workout-text').textContent = `${bodyParts} • ${date}`;
+            } else {
+                lastWorkoutEl.style.display = 'none';
             }
             
             // Body parts
