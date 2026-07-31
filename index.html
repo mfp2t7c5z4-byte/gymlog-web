@@ -548,22 +548,23 @@
         <div class="content" id="content">
             <!-- Home Screen -->
             <div id="home-screen" class="screen active">
+                <div id="motivation-quote" class="quote" style="display: none; margin-bottom: 12px;"></div>
                 <button class="button" id="start-btn" style="background-color: #22C55E; margin-bottom: 12px;">💪 Start Workout</button>
                 
                 <div class="stat-row">
                     <div class="stat-row-item">
-                        <div class="stat-row-value" id="streak-value">0</div>
-                        <div class="stat-row-label">🔥 Streak</div>
+                        <div class="stat-row-value" id="days-since-value">0</div>
+                        <div class="stat-row-label">Days Since</div>
                     </div>
                     <div class="stat-row-item">
-                        <div class="stat-row-value" id="workouts-count">0</div>
-                        <div class="stat-row-label">Total</div>
+                        <div class="stat-row-value" id="weekly-kg-value">0</div>
+                        <div class="stat-row-label">kg This Week</div>
                     </div>
                 </div>
 
                 <div id="this-week-stats" class="stat-card" style="display: none;">
-                    <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">This Week</div>
-                    <div id="week-stats-text" style="font-size: 14px; color: var(--foreground);"></div>
+                    <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Workouts This Week</div>
+                    <div id="week-stats-text" style="font-size: 18px; color: var(--foreground); font-weight: 700;"></div>
                 </div>
 
                 <div id="last-workout" class="stat-card" style="display: none;">
@@ -576,11 +577,6 @@
                     <div id="volume-chart" class="chart"></div>
                 </div>
 
-                <div id="top-prs" style="display: none;">
-                    <div style="font-size: 13px; font-weight: 700; color: var(--foreground); margin-bottom: 8px;">🏆 Top Lifts</div>
-                    <div id="top-prs-list"></div>
-                </div>
-
                 <div id="body-parts" class="stat-card" style="display: none;">
                     <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Body Parts This Week</div>
                     <div id="body-parts-text" style="font-size: 13px; color: var(--foreground);"></div>
@@ -590,10 +586,6 @@
                     <div class="chart-title">Workouts This Week</div>
                     <div id="frequency-chart" class="chart"></div>
                 </div>
-
-                <div id="motivation-quote" class="quote" style="display: none;"></div>
-
-                <div id="recent-workouts"></div>
             </div>
 
             <!-- Workout Screen -->
